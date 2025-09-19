@@ -30,10 +30,12 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(userRepositoryProvider);
-    final useCase = CreateUserUseCase(repo);
-    final provider = ref.read(userFormProvider.notifier);
-    provider.setUseCase(useCase);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final repo = ref.read(userRepositoryProvider);
+      final useCase = CreateUserUseCase(repo);
+      final provider = ref.read(userFormProvider.notifier);
+      provider.setUseCase(useCase);
+    });
   }
 
   @override
