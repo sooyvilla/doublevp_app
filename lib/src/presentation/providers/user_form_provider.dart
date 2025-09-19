@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user.dart';
 import '../../domain/usecases/create_user_usecase.dart';
 
-final userFormProvider = AsyncNotifierProvider<UserFormProvider, void>(
-  () => UserFormProvider(),
+final userFormProvider = AsyncNotifierProvider<UserFormNotifier, void>(
+  () => UserFormNotifier(),
 );
 
-class UserFormProvider extends AsyncNotifier<void> {
+class UserFormNotifier extends AsyncNotifier<void> {
   late CreateUserUseCase _useCase;
 
   @override
