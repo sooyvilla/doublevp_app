@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../../domain/usecases/get_all_users_usecase.dart';
-import '../../presentation/providers/user_list_provider.dart';
+import '../providers/user_list_notifier.dart';
+import 'user_detail_page.dart';
 import 'user_form_page.dart';
 
 /// Página que muestra la lista de usuarios.
@@ -21,7 +22,7 @@ class _UserListPageState extends ConsumerState<UserListPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final repo = ref.read(userRepositoryProvider);
       final useCase = GetAllUsersUseCase(repo);
-      final notifier = ref.read(userListProvider.notifier);
+      final notifier = ref.read(userListNotifier.notifier);
       notifier.setUseCase(useCase);
       notifier.load();
     });
@@ -30,18 +31,12 @@ class _UserListPageState extends ConsumerState<UserListPage> {
   Future<void> _deleteUser(int id) async {
     final repo = ref.read(userRepositoryProvider);
     await repo.deleteUser(id);
-    await ref.read(userListProvider.notifier).load();
-  }
-
-  void _editUser(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const UserFormPage()));
+    await ref.read(userListNotifier.notifier).load();
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(userListProvider);
+    final state = ref.watch(userListNotifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Usuarios')),
@@ -53,14 +48,28 @@ class _UserListPageState extends ConsumerState<UserListPage> {
             itemBuilder: (context, index) {
               final u = list[index];
               return ListTile(
-                title: Text('${u.firstName} ${u.lastName}'),
+                title: GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => UserDetailPage(userId: u.id),
+                    ),
+                  ),
+                  child: Text('${u.firstName} ${u.lastName}'),
+                ),
                 subtitle: Text('${u.birthDate.toLocal()}'.split(' ')[0]),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: () => _editUser(context),
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => UserFormPage(userId: u.id),
+                          ),
+                        );
+                        await ref.read(userListNotifier.notifier).load();
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete),

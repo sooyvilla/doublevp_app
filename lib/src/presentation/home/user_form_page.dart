@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers.dart';
 import '../../data/models/address.dart';
 import '../../data/models/user.dart';
-import '../../domain/usecases/create_user_usecase.dart';
-import '../providers/user_form_provider.dart';
+import '../providers/user_form_notifier.dart';
 
 /// Página con el formulario para crear/editar un usuario.
-///
-/// Contendrá campos para nombre, apellido, fecha de nacimiento y
-/// una lista para agregar múltiples direcciones.
 class UserFormPage extends ConsumerStatefulWidget {
-  const UserFormPage({super.key});
+  final int? userId;
+
+  const UserFormPage({super.key, this.userId});
 
   @override
   ConsumerState<UserFormPage> createState() => _UserFormPageState();
@@ -25,16 +22,11 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
   final TextEditingController _lastNameCtrl = TextEditingController();
   DateTime? _birthDate;
 
-  final List<Address> _addresses = [];
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final repo = ref.read(userRepositoryProvider);
-      final useCase = CreateUserUseCase(repo);
-      final provider = ref.read(userFormProvider.notifier);
-      provider.setUseCase(useCase);
+      ref.read(userFormNotifier(widget.userId));
     });
   }
 
@@ -129,15 +121,15 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
           ),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                _addresses.add(
-                  Address.create(
-                    country: countryCtrl.text,
-                    department: deptCtrl.text,
-                    municipality: muniCtrl.text,
-                  ),
-                );
-              });
+              ref
+                  .read(userFormNotifier(widget.userId).notifier)
+                  .addAddress(
+                    Address.create(
+                      country: countryCtrl.text,
+                      department: deptCtrl.text,
+                      municipality: muniCtrl.text,
+                    ),
+                  );
               Navigator.of(context).pop();
             },
             child: const Text('Agregar'),
@@ -148,25 +140,32 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona fecha de nacimiento')),
       );
       return;
     }
+    late final User user;
+    if (widget.userId == null) {
+      user = User.create(
+        firstName: _firstNameCtrl.text,
+        lastName: _lastNameCtrl.text,
+        birthDate: _birthDate!,
+      );
+    } else {
+      user = User()
+        ..id = widget.userId!
+        ..firstName = _firstNameCtrl.text
+        ..lastName = _lastNameCtrl.text
+        ..birthDate = _birthDate!;
+    }
 
-    final user = User.create(
-      firstName: _firstNameCtrl.text,
-      lastName: _lastNameCtrl.text,
-      birthDate: _birthDate!,
-    );
-    user.addresses.addAll(_addresses);
-
-    final controller = ref.read(userFormProvider.notifier);
+    final controller = ref.read(userFormNotifier(widget.userId).notifier);
     await controller.submit(user);
 
-    final state = ref.read(userFormProvider);
+    final state = ref.read(userFormNotifier(widget.userId));
     state.when(
       data: (_) {
         Navigator.of(context).pop();
@@ -180,10 +179,23 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncState = ref.watch(userFormProvider);
+    // Listen to loaded user changes. Must be called inside build.
+    ref.listen<User?>(userFormLoadedUserNotifier(widget.userId), (prev, next) {
+      if (next != null && mounted) {
+        setState(() {
+          _firstNameCtrl.text = next.firstName;
+          _lastNameCtrl.text = next.lastName;
+          _birthDate = next.birthDate;
+        });
+      }
+    });
+    final asyncState = ref.watch(userFormNotifier(widget.userId));
+    final addresses = ref.watch(userFormAddressesNotifierFamily(widget.userId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear usuario')),
+      appBar: AppBar(
+        title: Text(widget.userId == null ? 'Crear usuario' : 'Editar usuario'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -226,7 +238,7 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ..._addresses.map(
+                ...addresses.map(
                   (a) => ListTile(
                     title: Text(
                       '${a.country} - ${a.department} - ${a.municipality}',
