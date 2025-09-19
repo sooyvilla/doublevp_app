@@ -9,7 +9,10 @@ import '../domain/repositories/user_repository.dart';
 /// Proveedor que abre la instancia de Isar.
 final isarProvider = FutureProvider<Isar>((ref) async {
   final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open([UserSchema], directory: dir.path);
+  final isar = await Isar.open([
+    UserSchema,
+    AddressSchema,
+  ], directory: dir.path);
   return isar;
 });
 
