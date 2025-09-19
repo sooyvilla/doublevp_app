@@ -147,23 +147,12 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
       );
       return;
     }
-    late final User user;
-    if (widget.userId == null) {
-      user = User.create(
-        firstName: _firstNameCtrl.text,
-        lastName: _lastNameCtrl.text,
-        birthDate: _birthDate!,
-      );
-    } else {
-      user = User()
-        ..id = widget.userId!
-        ..firstName = _firstNameCtrl.text
-        ..lastName = _lastNameCtrl.text
-        ..birthDate = _birthDate!;
-    }
-
     final controller = ref.read(userFormNotifier(widget.userId).notifier);
-    await controller.submit(user);
+    await controller.onSave(
+      firstName: _firstNameCtrl.text,
+      lastName: _lastNameCtrl.text,
+      birthDate: _birthDate,
+    );
 
     final state = ref.read(userFormNotifier(widget.userId));
     state.when(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
-import '../../domain/usecases/get_all_users_usecase.dart';
 import '../providers/user_list_notifier.dart';
 import 'user_detail_page.dart';
 import 'user_form_page.dart';
@@ -16,22 +15,10 @@ class UserListPage extends ConsumerStatefulWidget {
 }
 
 class _UserListPageState extends ConsumerState<UserListPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final repo = ref.read(userRepositoryProvider);
-      final useCase = GetAllUsersUseCase(repo);
-      final notifier = ref.read(userListNotifier.notifier);
-      notifier.setUseCase(useCase);
-      notifier.load();
-    });
-  }
-
   Future<void> _deleteUser(int id) async {
     final repo = ref.read(userRepositoryProvider);
     await repo.deleteUser(id);
-    await ref.read(userListNotifier.notifier).load();
+    await ref.read(userListNotifier.notifier).refresh();
   }
 
   @override
@@ -69,7 +56,7 @@ class _UserListPageState extends ConsumerState<UserListPage> {
                           ),
                         );
                         if (result == true) {
-                          await ref.read(userListNotifier.notifier).load();
+                          await ref.read(userListNotifier.notifier).refresh();
                         }
                       },
                     ),
@@ -92,7 +79,8 @@ class _UserListPageState extends ConsumerState<UserListPage> {
           final result = await Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const UserFormPage()));
-          if (result == true) await ref.read(userListNotifier.notifier).load();
+          if (result == true)
+            await ref.read(userListNotifier.notifier).refresh();
         },
         child: const Icon(Icons.add),
       ),

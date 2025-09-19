@@ -38,7 +38,6 @@ class UserFormNotifier extends FamilyAsyncNotifier<void, int?> {
 
   @override
   Future<void> build(int? userId) async {
-    // Inyectar caso de uso según si es creación o actualización
     if (userId == null) {
       final c = ref.read(createUserUseCaseNotifier);
       _useCase = c;
@@ -51,6 +50,50 @@ class UserFormNotifier extends FamilyAsyncNotifier<void, int?> {
       final getUser = ref.read(getUserByIdUseCaseNotifier);
       final u = await getUser.call(userId);
       await loadUser(u);
+    }
+  }
+
+  void _validateInput({
+    required String firstName,
+    required String lastName,
+    required DateTime? birthDate,
+  }) {
+    if (firstName.trim().isEmpty) throw FormatException('firstName');
+    if (lastName.trim().isEmpty) throw FormatException('lastName');
+    if (birthDate == null) throw FormatException('birthDate');
+  }
+
+  Future<void> onSave({
+    required String firstName,
+    required String lastName,
+    required DateTime? birthDate,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      _validateInput(
+        firstName: firstName,
+        lastName: lastName,
+        birthDate: birthDate,
+      );
+
+      final user = (_loadedUser != null)
+          ? (User()
+              ..id = _loadedUser!.id
+              ..firstName = firstName
+              ..lastName = lastName
+              ..birthDate = birthDate!)
+          : User.create(
+              firstName: firstName,
+              lastName: lastName,
+              birthDate: birthDate!,
+            );
+
+      user.plainAddresses = List.from(_addresses);
+
+      await _useCase.call(user);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 
@@ -70,7 +113,6 @@ class UserFormNotifier extends FamilyAsyncNotifier<void, int?> {
 
   void addAddress(Address a) {
     _addresses.add(a);
-    // trigger listeners
     state = const AsyncValue.data(null);
   }
 
