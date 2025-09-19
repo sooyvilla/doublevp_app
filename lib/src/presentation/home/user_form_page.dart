@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/models/address.dart';
 import '../../domain/models/user.dart';
 import '../providers/user_form_notifier.dart';
+import '../widgets/add_address_dialog.dart';
+import '../widgets/input_decorations.dart';
 
 /// Página con el formulario para crear/editar un usuario.
 class UserFormPage extends ConsumerStatefulWidget {
@@ -26,7 +27,10 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(userFormNotifier(widget.userId));
+      // Ensure the notifier instance is created so `build` runs and data loads
+      // when editing. Reading the notifier (not the AsyncValue) forces
+      // initialization in initState.
+      ref.read(userFormNotifier(widget.userId).notifier);
     });
   }
 
@@ -89,52 +93,11 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
   }
 
   void _addAddress() {
-    final countryCtrl = TextEditingController();
-    final deptCtrl = TextEditingController();
-    final muniCtrl = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Agregar dirección'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: countryCtrl,
-              decoration: const InputDecoration(labelText: 'País'),
-            ),
-            TextField(
-              controller: deptCtrl,
-              decoration: const InputDecoration(labelText: 'Departamento'),
-            ),
-            TextField(
-              controller: muniCtrl,
-              decoration: const InputDecoration(labelText: 'Municipio'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              ref
-                  .read(userFormNotifier(widget.userId).notifier)
-                  .addAddress(
-                    Address.create(
-                      country: countryCtrl.text,
-                      department: deptCtrl.text,
-                      municipality: muniCtrl.text,
-                    ),
-                  );
-              Navigator.of(context).pop();
-            },
-            child: const Text('Agregar'),
-          ),
-        ],
+      builder: (_) => AddAddressDialog(
+        onAdd: (a) =>
+            ref.read(userFormNotifier(widget.userId).notifier).addAddress(a),
       ),
     );
   }
@@ -181,73 +144,127 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
     final asyncState = ref.watch(userFormNotifier(widget.userId));
     final addresses = ref.watch(userFormAddressesNotifierFamily(widget.userId));
 
+    InputDecoration inputDecoration(String label) =>
+        appInputDecoration(context, label);
+
+    final loaded = ref.read(userFormLoadedUserNotifier(widget.userId));
+    if (loaded != null) {
+      _firstNameCtrl.text = loaded.firstName;
+      _lastNameCtrl.text = loaded.lastName;
+      _birthDate = loaded.birthDate;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.userId == null ? 'Crear usuario' : 'Editar usuario'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _firstNameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nombre'),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _lastNameCtrl,
-                  decoration: const InputDecoration(labelText: 'Apellido'),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  subtitle: _birthDate != null
-                      ? Text('Fecha de nacimiento')
-                      : null,
-                  title: Text(
-                    _birthDate == null
-                        ? 'Fecha de nacimiento'
-                        : '${_birthDate!.toLocal()}'.split(' ')[0],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.calendar_month),
-                    onPressed: _pickBirthDate,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Direcciones',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ...addresses.map(
-                  (a) => ListTile(
-                    title: Text(
-                      '${a.country} - ${a.department} - ${a.municipality}',
+        child: Material(
+          color: Colors.transparent,
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Image.asset('assets/images/app_icon.png'),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _firstNameCtrl,
+                            decoration: inputDecoration('Nombre'),
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Ingresa el nombre'
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _lastNameCtrl,
+                            decoration: inputDecoration('Apellido'),
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Ingresa el apellido'
+                                : null,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: _addAddress,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Agregar dirección'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: asyncWhenNotLoading(asyncState, _submit),
-                  child: asyncState.isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text('Guardar'),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _birthDate == null
+                              ? 'Fecha de nacimiento no seleccionada'
+                              : '${_birthDate!.day.toString().padLeft(2, '0')}/${_birthDate!.month.toString().padLeft(2, '0')}/${_birthDate!.year}',
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _pickBirthDate,
+                        child: const Text('Seleccionar fecha'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Direcciones',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      TextButton.icon(
+                        onPressed: _addAddress,
+                        icon: const Icon(Icons.add_location_alt_outlined),
+                        label: const Text('Agregar'),
+                      ),
+                    ],
+                  ),
+                  if (addresses.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text('No hay direcciones registradas'),
+                    )
+                  else
+                    ...addresses.map(
+                      (a) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${a.country} · ${a.department} · ${a.municipality}',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 18),
+                  ElevatedButton(
+                    onPressed: asyncWhenNotLoading(asyncState, _submit),
+                    child: asyncState.isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(widget.userId == null ? 'Crear' : 'Guardar'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../providers/user_list_notifier.dart';
+import '../widgets/initials_avatar.dart';
 import 'user_detail_page.dart';
 import 'user_form_page.dart';
 
@@ -34,37 +35,78 @@ class _UserListPageState extends ConsumerState<UserListPage> {
             itemCount: list.length,
             itemBuilder: (context, index) {
               final u = list[index];
-              return ListTile(
-                title: GestureDetector(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => UserDetailPage(userId: u.id),
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 6.0,
+                ),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => UserDetailPage(userId: u.id),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0,
+                        vertical: 10.0,
+                      ),
+                      child: Row(
+                        children: [
+                          InitialsAvatar(
+                            firstName: u.firstName,
+                            lastName: u.lastName,
+                            heroTag: 'user-${u.id}-avatar',
+                            radius: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${u.firstName} ${u.lastName}',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${u.birthDate.toLocal()}'.split(' ')[0],
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () async {
+                              final result = await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => UserFormPage(userId: u.id),
+                                ),
+                              );
+                              if (result == true) {
+                                await ref
+                                    .read(userListNotifier.notifier)
+                                    .refresh();
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _deleteUser(u.id),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Text('${u.firstName} ${u.lastName}'),
-                ),
-                subtitle: Text('${u.birthDate.toLocal()}'.split(' ')[0]),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () async {
-                        final result = await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => UserFormPage(userId: u.id),
-                          ),
-                        );
-                        if (result == true) {
-                          await ref.read(userListNotifier.notifier).refresh();
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteUser(u.id),
-                    ),
-                  ],
                 ),
               );
             },
@@ -74,13 +116,14 @@ class _UserListPageState extends ConsumerState<UserListPage> {
         error: (e, st) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton(
-        heroTag: 'addUser',
+        heroTag: 'fab-add-user',
         onPressed: () async {
           final result = await Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const UserFormPage()));
-          if (result == true)
+          if (result == true) {
             await ref.read(userListNotifier.notifier).refresh();
+          }
         },
         child: const Icon(Icons.add),
       ),
