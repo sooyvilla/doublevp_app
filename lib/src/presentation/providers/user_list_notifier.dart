@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/user.dart';
+import '../../domain/models/user.dart';
 import '../../domain/usecases/get_all_users_usecase.dart';
 
 final userListNotifier = AsyncNotifierProvider<UserListNotifier, List<User>>(

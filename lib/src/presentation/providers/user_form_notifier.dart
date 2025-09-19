@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
-import '../../data/models/address.dart';
-import '../../data/models/user.dart';
+import '../../domain/models/address.dart';
+import '../../domain/models/user.dart';
 import '../../domain/usecases/create_user_usecase.dart';
 import '../../domain/usecases/get_user_by_id_usecase.dart';
 import '../../domain/usecases/update_user_usecase.dart';

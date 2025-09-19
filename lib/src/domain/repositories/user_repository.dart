@@ -1,4 +1,4 @@
-import '../../data/models/user.dart';
+import '../models/user.dart';
 
 /// Repositorio abstracto para operaciones de `User`.
 abstract class UserRepository {

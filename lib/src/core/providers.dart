@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../data/models/models.dart';
+import '../domain/models/models.dart';
 import '../data/repositories/isar_user_repository.dart';
 import '../domain/repositories/user_repository.dart';
 

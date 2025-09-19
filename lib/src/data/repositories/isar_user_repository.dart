@@ -1,8 +1,8 @@
 import 'package:isar/isar.dart';
 
 import '../../domain/repositories/user_repository.dart';
-import '../models/address.dart';
-import '../models/user.dart';
+import '../../domain/models/address.dart';
+import '../../domain/models/user.dart';
 
 /// Implementación de `UserRepository` usando Isar.
 class IsarUserRepository implements UserRepository {

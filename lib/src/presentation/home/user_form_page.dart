@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/address.dart';
-import '../../data/models/user.dart';
+import '../../domain/models/address.dart';
+import '../../domain/models/user.dart';
 import '../providers/user_form_notifier.dart';
 
 /// Página con el formulario para crear/editar un usuario.
