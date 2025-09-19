@@ -1,6 +1,6 @@
 name: doublevp_app
 description: "Registra usuarios y sus multiples direcciones."
-version: 0.0.1+1
+version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
