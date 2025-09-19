@@ -63,12 +63,14 @@ class _UserListPageState extends ConsumerState<UserListPage> {
                     IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () async {
-                        await Navigator.of(context).push(
+                        final result = await Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => UserFormPage(userId: u.id),
                           ),
                         );
-                        await ref.read(userListNotifier.notifier).load();
+                        if (result == true) {
+                          await ref.read(userListNotifier.notifier).load();
+                        }
                       },
                     ),
                     IconButton(
@@ -86,10 +88,11 @@ class _UserListPageState extends ConsumerState<UserListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'addUser',
-        onPressed: () {
-          Navigator.of(
+        onPressed: () async {
+          final result = await Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const UserFormPage()));
+          if (result == true) await ref.read(userListNotifier.notifier).load();
         },
         child: const Icon(Icons.add),
       ),

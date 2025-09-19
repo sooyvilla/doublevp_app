@@ -168,7 +168,7 @@ class _UserFormPageState extends ConsumerState<UserFormPage> {
     final state = ref.read(userFormNotifier(widget.userId));
     state.when(
       data: (_) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       },
       loading: () => null,
       error: (e, st) => ScaffoldMessenger.of(
