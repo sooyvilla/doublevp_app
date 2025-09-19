@@ -58,10 +58,9 @@ class UserFormNotifier extends FamilyAsyncNotifier<void, int?> {
     if (user == null) return;
     state = const AsyncValue.loading();
     try {
-      await user.addresses.load();
       _addresses
         ..clear()
-        ..addAll(user.addresses.toList());
+        ..addAll(user.plainAddresses);
       _loadedUser = user;
       state = const AsyncValue.data(null);
     } catch (e, st) {
@@ -78,8 +77,7 @@ class UserFormNotifier extends FamilyAsyncNotifier<void, int?> {
   Future<void> submit(User user) async {
     state = const AsyncValue.loading();
     try {
-      user.addresses.clear();
-      user.addresses.addAll(_addresses);
+      user.plainAddresses = List.from(_addresses);
       await _useCase.call(user);
       state = const AsyncValue.data(null);
     } catch (e, st) {

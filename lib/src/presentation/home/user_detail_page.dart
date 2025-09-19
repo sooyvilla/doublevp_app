@@ -36,7 +36,7 @@ class UserDetailPage extends ConsumerWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ...u.addresses.toList().map(
+                ...u.plainAddresses.map(
                   (a) => ListTile(
                     title: Text(
                       '${a.country} - ${a.department} - ${a.municipality}',

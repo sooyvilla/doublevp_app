@@ -1,21 +1,20 @@
-import 'package:isar/isar.dart';
-
 import 'address.dart';
 
-part 'user.g.dart';
-
-/// Modelo User almacenado en Isar.
-@Collection()
+/// Modelo User del dominio (sin dependencia a Isar).
 class User {
-  Id id = Isar.autoIncrement;
+  int id = 0;
 
   late String firstName;
   late String lastName;
   late DateTime birthDate;
 
-  final addresses = IsarLinks<Address>();
+  List<Address> plainAddresses = [];
 
   User();
 
-  User.create({required this.firstName, required this.lastName, required this.birthDate});
+  User.create({
+    required this.firstName,
+    required this.lastName,
+    required this.birthDate,
+  });
 }
