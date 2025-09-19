@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:doublevp_app/src/presentation/home/user_form_page.dart';
 import 'package:doublevp_app/src/core/providers.dart';
 import 'package:doublevp_app/src/domain/models/user.dart';
 import 'package:doublevp_app/src/domain/repositories/user_repository.dart';
+import 'package:doublevp_app/src/presentation/home/user_form_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 class _FakeRepo implements UserRepository {
   @override
@@ -26,13 +26,16 @@ class _FakeRepo implements UserRepository {
 void main() {
   testWidgets('UserFormPage muestra campos y botones', (tester) async {
     await tester.pumpWidget(
-      ProviderScope(overrides: [userRepositoryProvider.overrideWithValue(_FakeRepo())], child: const MaterialApp(home: UserFormPage())),
+      ProviderScope(
+        overrides: [userRepositoryProvider.overrideWithValue(_FakeRepo())],
+        child: const MaterialApp(home: UserFormPage()),
+      ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Nombre'), findsOneWidget);
     expect(find.text('Apellido'), findsOneWidget);
-  expect(find.text('Agregar'), findsOneWidget);
-  expect(find.text('Crear'), findsOneWidget);
+    expect(find.text('Agregar'), findsOneWidget);
+    expect(find.text('Crear'), findsOneWidget);
   });
 }
